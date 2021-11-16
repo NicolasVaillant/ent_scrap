@@ -8,3 +8,7 @@ A basic python scraper for extract all notes from my ENT
 3. Change *url* variable to POST data to php file (optionnal)
 4. **Run** scrapy runspider entscrap.py
 
+Finally, this file will create : 
+- *res.html* (scraped page) 
+- *note.json*
+- *note_concat.json*
