@@ -1,5 +1,5 @@
 # ent_scrap
-A basic python scraper for extract all notes from my ENT
+A basic python scraper for extract all grades from my ENT
 
 ---
 
@@ -10,5 +10,5 @@ A basic python scraper for extract all notes from my ENT
 
 Finally, this file will create : 
 - *res.html* (scraped page) 
-- *note.json* (all notes with subject and average)
-- *note_concat.json* (all notes one by one, ordered chronologically)
+- *note.json* (all grades with subject and average)
+- *note_concat.json* (all grades one by one, ordered chronologically)
