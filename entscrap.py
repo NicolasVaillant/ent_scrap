@@ -1,7 +1,8 @@
 import scrapy
+from scrapy.crawler import CrawlerProcess
 import json
-import re
-import requests
+import numpy as np
+from lxml import etree
 
 def authentication_failed(response):
     pass
@@ -13,14 +14,14 @@ homeUrl = 'https://ent.istp-france.com/ENT/Login/Login2.aspx'
 class entSpider(scrapy.Spider):
     name = 'ent'
     start_urls = [
-        'https://ent.istp-france.com/ENT/Eleve/MesNotes.aspx'
+        'https://ent.istp-france.com/ENT/Eleve/Default.aspx'
     ]
 
     def parse(self, response):
         self.logger.info('A response from %s just arrived!', response.url)
         return scrapy.FormRequest.from_response(
             response,
-            formdata={'UserName': 'username', 'Password': 'pass'},
+            formdata={'UserName': '', 'Password': ''},
             callback=self.after_login
         )
 
@@ -30,48 +31,61 @@ class entSpider(scrapy.Spider):
             self.logger.error("Login failed")
             return
 
-        filename = 'res.html'
-        with open(filename, 'wb') as f:
-            f.write(response.body)
-        
-        username = response.xpath('//li[@class="logo-user"]/text()').get()
-        note = response.xpath('//table[@class="Bulletin-table"]/tr/td/text()').getall()
-        # s2 = response.xpath('//table[@id="ctl00_MainContent_TabContainer1_TP1_bulletin1_LblNote"]/text()').getall()
+
+        # filename = 'res.html'
+        # with open(filename, 'wb') as f:
+        #     f.write(response.body)
+
+        note = response.xpath('//*[@id="ctl00_MainContent_TabContainer1_TP2_GridView1"]').getall()
 
         if note is not None:
-            r = re.compile("^((?!\r\n).)*$")
-
-            filtered_list = list(filter(r.match, note))
+            notesEnt = []
+            notesFile = []
+            table = etree.HTML(str(note)).find("body/table")
+            rows = iter(table)
+            headers = [col.text for col in next(rows)]
+            for row in rows:
+                values = [col.text for col in row]
+            
+                result = zip(headers, values)
+                notesEnt.append(list(result))
+        
             arrayNote = 'note.json'
 
             with open(arrayNote, 'w') as fNP:
-                json.dump(filtered_list, fNP)
+                json.dump(notesEnt, fNP)
 
-            print(filtered_list)
-            content = []
-            ru = []
-            indices = [i for i, x in enumerate(filtered_list) if x == "10"]
-            a = 0
-            b = -1
+            print("---")
+
+            # print(type(notes))
+            print(notesEnt)
             
-            for i in indices :
-                a +=1
-                b +=1
-                content.append(indices[b] - 1)
-                ru.append(filtered_list[content[b]])
+            print("---")
+            f = open(arrayNote, "r")
+            # print(type(f.read()))
+            # notesFile((f.read()).split())
 
-            arrayNoteC = 'web/note_concat.json'
+            print(f.read())
+            
+            print("---")
+            
+            from_ent = np.array(notesEnt)
+            from_array = np.array(f.read())
+            print((from_ent == from_array).all())
+            
+            print("---")
 
-            with open(arrayNoteC, 'w') as fNPC:
-                json.dump([
-                    ["title", [username]], 
-                    ["notes", ru]
-                ], fNPC)
+            for i in range(len(notesEnt)) : 
+                new = {
+                    'date' : notesEnt[i][0][1],
+                    'cours' : notesEnt[i][1][1],
+                    'intervenant' : notesEnt[i][2][1],
+                    'note' : notesEnt[i][3][1]
+                }
 
-            url = 'url.php'
-            myobj = {'note':  [["title", [username]], ["notes", all]]}
+                print(new)
 
-            requests.post(url, data = myobj)
-
-print("\nstart scraping\n")    
-
+            
+if __name__ == "__main__":
+    print("\nstart scraping\n")   
+   
